@@ -3,3 +3,12 @@
 
 # Ignore Gradle build output directory
 build
+
+.idea/
+.metals/
+.settings/
+.vim/
+bin/
+.classpath
+.project
+.vimspector.json
