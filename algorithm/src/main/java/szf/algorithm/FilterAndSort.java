@@ -9,6 +9,7 @@ public class FilterAndSort {
   }
 
   public static Comparator<String> sort(String word) {
-    return (string1, string2) -> EditDistance.minDistance(string1, string2);
+    return (string1, string2) -> Integer.compare(EditDistance.minDistance(word, string1),
+        EditDistance.minDistance(word, string2));
   }
 }

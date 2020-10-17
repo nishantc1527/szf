@@ -1,10 +1,7 @@
 package szf;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.Comparator;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -20,46 +17,36 @@ import com.googlecode.lanterna.screen.TabBehaviour;
 import com.googlecode.lanterna.screen.TerminalScreen;
 import com.googlecode.lanterna.terminal.DefaultTerminalFactory;
 
-import szf.algorithm.EditDistance;
-import szf.algorithm.FilterAndSort;
-
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
+import szf.algorithm.FilterAndSort;
 
 public class Main {
 
-  @Option(names = { "-c", "--command" }, description = "The Command To Run To Get The Input Strings", required = true)
-  private String command;
+  @Option(names = { "-i",
+      "--input" }, description = "The Input Text, Seperated By New Line Characters", required = true)
+  private String input;
 
-  private static void updateList(TextGraphics textGraphics, List<String> input, Screen screen, String word)
+  private static List<String> updateList(TextGraphics textGraphics, String[] input, Screen screen, String word)
       throws IOException {
-      textGraphics.fillRectangle(new TerminalPosition(0, 1), screen.getTerminalSize().withRelativeRows(-1), ' ');
-      List<String> newInput = input.stream().filter((string) -> {
-        return string.length() >= word.length();
-      }).sorted(FilterAndSort.sort(word)).collect(Collectors.toList());
+    textGraphics.fillRectangle(new TerminalPosition(0, 1), screen.getTerminalSize().withRelativeRows(-1), ' ');
+    List<String> newInput = Arrays.stream(input).filter(FilterAndSort.filter(word)).sorted(FilterAndSort.sort(word))
+        .collect(Collectors.toList());
 
-      for (int i = 1; i <= newInput.size(); i++) {
-        textGraphics.putString(0, i, newInput.get(i - 1), SGR.BOLD);
-      }
+    for (int i = 1; i <= newInput.size(); i++) {
+      textGraphics.putString(0, i, newInput.get(i - 1), SGR.BOLD);
+    }
 
-      screen.refresh();
+    screen.refresh();
+
+    return newInput;
   }
 
   public static void main(String[] args) throws IOException {
     Main main = new Main();
     new CommandLine(main).parseArgs(args);
 
-    System.out.println(main.command);
-    System.exit(0);
-
-    List<String> input = new ArrayList<>();
-    BufferedReader reader = new BufferedReader(
-        new InputStreamReader(Runtime.getRuntime().exec(main.command.split(" ")).getInputStream()));
-
-    while (reader.ready()) {
-      String nextLine = reader.readLine();
-      input.add(nextLine);
-    }
+    String[] input = main.input.split("\n");
 
     DefaultTerminalFactory defaultTerminalFactory = new DefaultTerminalFactory();
     Screen screen = new TerminalScreen(defaultTerminalFactory.createTerminal());
@@ -71,8 +58,8 @@ public class Main {
 
     TextGraphics textGraphics = screen.newTextGraphics().setTabBehaviour(TabBehaviour.CONVERT_TO_FOUR_SPACES);
 
-    for (int i = 1; i <= input.size(); i++) {
-      textGraphics.putString(0, i, input.get(i - 1), SGR.BOLD);
+    for (int i = 1; i <= input.length; i++) {
+      textGraphics.putString(0, i, input[i - 1], SGR.BOLD);
     }
 
     screen.refresh();
@@ -80,8 +67,8 @@ public class Main {
     textGraphics.setCharacter(0, 0, new TextCharacter('>', ANSI.GREEN, ANSI.DEFAULT, SGR.BOLD));
     screen.refresh();
 
+    String[] newInput = input;
     StringBuilder word = new StringBuilder();
-    List<String> newInput = new ArrayList<>(input);
 
     while (true) {
       KeyStroke keyStroke = screen.readInput();
@@ -102,7 +89,7 @@ public class Main {
           screen.setCursorPosition(screen.getCursorPosition().withRelativeColumn(-1));
           screen.refresh();
 
-          updateList(textGraphics, input, screen, word.toString());
+          newInput = updateList(textGraphics, input, screen, word.toString());
         }
       } else {
         Character character = keyStroke.getCharacter();
@@ -114,15 +101,15 @@ public class Main {
           screen.setCursorPosition(screen.getCursorPosition().withRelativeColumn(1));
           screen.refresh();
 
-          updateList(textGraphics, input, screen, word.toString());
+          newInput = updateList(textGraphics, input, screen, word.toString());
         }
       }
     }
 
     screen.close();
 
-    if (newInput.size() != 0) {
-      System.out.println(input.get(0));
+    if (!newInput.isEmpty()) {
+      System.out.println(newInput.get(0));
     }
   }
 
