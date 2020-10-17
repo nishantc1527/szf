@@ -46,6 +46,7 @@ public class Main {
     Main main = new Main();
     new CommandLine(main).parseArgs(args);
 
+    // List<String> input = new ArrayList<>(Arrays.asList(main.input.split("\n")));
     String[] input = main.input.split("\n");
 
     DefaultTerminalFactory defaultTerminalFactory = new DefaultTerminalFactory();
@@ -89,7 +90,7 @@ public class Main {
           screen.setCursorPosition(screen.getCursorPosition().withRelativeColumn(-1));
           screen.refresh();
 
-          newInput = updateList(textGraphics, input, screen, word.toString());
+          newInput = updateList(textGraphics, input, screen, word.toString()).toArray(new String[0]);
         }
       } else {
         Character character = keyStroke.getCharacter();
@@ -101,15 +102,15 @@ public class Main {
           screen.setCursorPosition(screen.getCursorPosition().withRelativeColumn(1));
           screen.refresh();
 
-          newInput = updateList(textGraphics, input, screen, word.toString());
+          newInput = updateList(textGraphics, input, screen, word.toString()).toArray(new String[0]);
         }
       }
     }
 
     screen.close();
 
-    if (!newInput.isEmpty()) {
-      System.out.println(newInput.get(0));
+    if (newInput.length != 0) {
+      System.out.println(newInput[0]);
     }
   }
 
