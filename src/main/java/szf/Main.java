@@ -2,8 +2,6 @@ package szf;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
 
 import com.googlecode.lanterna.SGR;
 import com.googlecode.lanterna.TerminalPosition;
@@ -24,17 +22,17 @@ import szf.algorithm.FilterAndSort;
 public class Main {
 
   @Option(names = { "-i",
-      "--input" }, description = "The Input Text, Seperated By New Line Characters", required = true)
+      "--input" }, description = "The Input Text, Separated By New Line Characters", required = true)
   private String input;
 
-  private static List<String> updateList(TextGraphics textGraphics, String[] input, Screen screen, String word)
+  private static String[] updateList(TextGraphics textGraphics, String[] input, Screen screen, String word)
       throws IOException {
     textGraphics.fillRectangle(new TerminalPosition(0, 1), screen.getTerminalSize().withRelativeRows(-1), ' ');
-    List<String> newInput = Arrays.stream(input).filter(FilterAndSort.filter(word)).sorted(FilterAndSort.sort(word))
-        .collect(Collectors.toList());
+    String[] newInput = Arrays.stream(input).filter(FilterAndSort.filter(word)).sorted(FilterAndSort.sort(word))
+        .toArray(String[]::new);
 
-    for (int i = 1; i <= newInput.size(); i++) {
-      textGraphics.putString(0, i, newInput.get(i - 1), SGR.BOLD);
+    for (int i = 1; i <= newInput.length; i++) {
+      textGraphics.putString(0, i, newInput[i - 1], SGR.BOLD);
     }
 
     screen.refresh();
@@ -58,7 +56,7 @@ public class Main {
 
     TextGraphics textGraphics = screen.newTextGraphics().setTabBehaviour(TabBehaviour.CONVERT_TO_FOUR_SPACES);
 
-    for (int i = 1; i <= input.length; i++) {
+    for (int i = 1; i <= input.length && i < screen.getTerminalSize().getRows(); i++) {
       textGraphics.putString(0, i, input[i - 1], SGR.BOLD);
     }
 
@@ -108,8 +106,8 @@ public class Main {
 
     screen.close();
 
-    if (!newInput.isEmpty()) {
-      System.out.println(newInput.get(0));
+    if (newInput.length != 0) {
+      System.out.println(newInput[0]);
     }
   }
 
