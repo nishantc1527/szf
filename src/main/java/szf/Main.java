@@ -1,7 +1,6 @@
 package szf;
 
 import java.io.IOException;
-import java.util.Arrays;
 
 import com.googlecode.lanterna.SGR;
 import com.googlecode.lanterna.TerminalPosition;
@@ -17,7 +16,8 @@ import com.googlecode.lanterna.terminal.DefaultTerminalFactory;
 
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
-import szf.algorithm.FilterAndSort;
+
+import szf.algorithm.ListUpdater;
 
 public class Main {
 
@@ -25,36 +25,21 @@ public class Main {
       "--input" }, description = "The Input Text, Separated By New Line Characters", required = true)
   private String input;
 
-  private static String[] updateList(TextGraphics textGraphics, String[] input, Screen screen, String word)
-      throws IOException {
-    textGraphics.fillRectangle(new TerminalPosition(0, 1), screen.getTerminalSize().withRelativeRows(-1), ' ');
-    String[] newInput = Arrays.stream(input).filter(FilterAndSort.filter(word)).sorted(FilterAndSort.sort(word))
-        .toArray(String[]::new);
-
-    for (int i = 1; i <= newInput.length; i++) {
-      textGraphics.putString(0, i, newInput[i - 1], SGR.BOLD);
-    }
-
-    screen.refresh();
-
-    return newInput;
-  }
-
-  public static void main(String[] args) throws IOException {
-    Main main = new Main();
+  public static void main(final String[] args) throws IOException {
+    final Main main = new Main();
     new CommandLine(main).parseArgs(args);
 
-    String[] input = main.input.split("\n");
+    final String[] input = main.input.split("\n");
 
-    DefaultTerminalFactory defaultTerminalFactory = new DefaultTerminalFactory();
-    Screen screen = new TerminalScreen(defaultTerminalFactory.createTerminal());
+    final DefaultTerminalFactory defaultTerminalFactory = new DefaultTerminalFactory();
+    final Screen screen = new TerminalScreen(defaultTerminalFactory.createTerminal());
 
     screen.startScreen();
     screen.setCursorPosition(new TerminalPosition(2, 0));
 
     screen.refresh();
 
-    TextGraphics textGraphics = screen.newTextGraphics().setTabBehaviour(TabBehaviour.CONVERT_TO_FOUR_SPACES);
+    final TextGraphics textGraphics = screen.newTextGraphics().setTabBehaviour(TabBehaviour.CONVERT_TO_FOUR_SPACES);
 
     for (int i = 1; i <= input.length && i < screen.getTerminalSize().getRows(); i++) {
       textGraphics.putString(0, i, input[i - 1], SGR.BOLD);
@@ -66,10 +51,10 @@ public class Main {
     screen.refresh();
 
     String[] newInput = input;
-    StringBuilder word = new StringBuilder();
+    final StringBuilder word = new StringBuilder();
 
     while (true) {
-      KeyStroke keyStroke = screen.readInput();
+      final KeyStroke keyStroke = screen.readInput();
 
       if (keyStroke.getKeyType() == KeyType.Escape) {
         screen.close();
@@ -87,10 +72,10 @@ public class Main {
           screen.setCursorPosition(screen.getCursorPosition().withRelativeColumn(-1));
           screen.refresh();
 
-          newInput = updateList(textGraphics, input, screen, word.toString());
+          newInput = ListUpdater.updateList(textGraphics, input, screen, word.toString());
         }
       } else {
-        Character character = keyStroke.getCharacter();
+        final Character character = keyStroke.getCharacter();
 
         if (character != null) {
           word.append(character);
@@ -99,12 +84,12 @@ public class Main {
           screen.setCursorPosition(screen.getCursorPosition().withRelativeColumn(1));
           screen.refresh();
 
-          newInput = updateList(textGraphics, input, screen, word.toString());
+          newInput = ListUpdater.updateList(textGraphics, input, screen, word.toString());
         }
       }
     }
 
-    screen.close();
+    screen.stopScreen();
 
     if (newInput.length != 0) {
       System.out.println(newInput[0]);

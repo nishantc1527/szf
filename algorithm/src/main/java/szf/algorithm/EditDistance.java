@@ -1,5 +1,7 @@
 package szf.algorithm;
 
+import org.apache.commons.lang.math.NumberUtils;
+
 public class EditDistance {
   public static int minDistance(String word1, String word2) {
     return minDistance(word1, word2, new int[word1.length()][word2.length()], 0, 0);
@@ -26,7 +28,9 @@ public class EditDistance {
       return memo[curr1][curr2] = minDistance(word1, word2, memo, curr1 + 1, curr2 + 1);
     }
 
-    return memo[curr1][curr2] = 1 + Math.min(minDistance(word1, word2, memo, curr1 + 1, curr2), Math
-        .min(minDistance(word1, word2, memo, curr1, curr2 + 1), minDistance(word1, word2, memo, curr1 + 1, curr2 + 1)));
+    int insert = minDistance(word1, word2, memo, curr1 + 1, curr2) + 1;
+    int delete = minDistance(word1, word2, memo, curr1, curr2 + 1) + 1;
+    int replace = minDistance(word1, word2, memo, curr1 + 1, curr2 + 1) + 1;
+    return memo[curr1][curr2] = NumberUtils.min(insert, delete, replace);
   }
 }
