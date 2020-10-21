@@ -99,7 +99,7 @@ public class Main {
               }
             }
             case 'l' -> {
-              if (screen.getCursorPosition().getColumn() != 2) {
+              if (screen.getCursorPosition().getColumn() != word.length() + 1) {
                 screen.setCursorPosition(screen.getCursorPosition().withRelativeColumn(1));
                 screen.refresh();
               }
