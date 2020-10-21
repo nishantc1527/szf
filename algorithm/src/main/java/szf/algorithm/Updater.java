@@ -32,7 +32,7 @@ public class Updater {
         break;
       }
 
-      textGraphics.putString(1, i, newInput[i - 1], SGR.BOLD);
+      textGraphics.putString(2, i, newInput[i - 1], SGR.BOLD);
     }
 
     return newInput;
