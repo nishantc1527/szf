@@ -5,10 +5,21 @@ import java.util.Arrays;
 
 import com.googlecode.lanterna.SGR;
 import com.googlecode.lanterna.TerminalPosition;
+import com.googlecode.lanterna.TextCharacter;
+import com.googlecode.lanterna.TextColor.ANSI;
 import com.googlecode.lanterna.graphics.TextGraphics;
 import com.googlecode.lanterna.screen.Screen;
 
-public class ListUpdater {
+public class Updater {
+
+  public static void updateWord(Screen screen, String word) throws IOException {
+    for (int i = 2; i < word.length() + 2; i++) {
+      screen.setCharacter(i, 0,
+          new TextCharacter(word.charAt(i - 2), ANSI.BLUE, ANSI.DEFAULT, SGR.UNDERLINE, SGR.BOLD));
+    }
+
+    screen.refresh();
+  }
 
   public static String[] updateList(TextGraphics textGraphics, String[] input, Screen screen, String word)
       throws IOException {
@@ -16,13 +27,14 @@ public class ListUpdater {
     String[] newInput = Arrays.stream(input).filter(FilterAndSort.filter(word)).sorted(FilterAndSort.sort(word))
         .toArray(String[]::new);
 
-    for (int i = 1; i <= newInput.length; i++) {
-      textGraphics.putString(0, i, newInput[i - 1], SGR.BOLD);
-    }
+    for (int i = 1; i < screen.getTerminalSize().getRows(); i++) {
+      if (i - 1 >= newInput.length) {
+        break;
+      }
 
-    screen.refresh();
+      textGraphics.putString(1, i, newInput[i - 1], SGR.BOLD);
+    }
 
     return newInput;
   }
-
 }

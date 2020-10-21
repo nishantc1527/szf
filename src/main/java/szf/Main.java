@@ -16,14 +16,15 @@ import com.googlecode.lanterna.terminal.DefaultTerminalFactory;
 
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
-
-import szf.algorithm.ListUpdater;
+import szf.algorithm.Updater;
 
 public class Main {
 
   @Option(names = { "-i",
       "--input" }, description = "The Input Text, Separated By New Line Characters", required = true)
   private String input;
+
+  public static final boolean INSERT = false, COMMAND = true;
 
   public static void main(final String[] args) throws IOException {
     final Main main = new Main();
@@ -42,57 +43,74 @@ public class Main {
     final TextGraphics textGraphics = screen.newTextGraphics().setTabBehaviour(TabBehaviour.CONVERT_TO_FOUR_SPACES);
 
     for (int i = 1; i <= input.length && i < screen.getTerminalSize().getRows(); i++) {
-      textGraphics.putString(0, i, input[i - 1], SGR.BOLD);
+      textGraphics.putString(1, i, input[i - 1], SGR.BOLD);
     }
 
-    screen.refresh();
-
     textGraphics.setCharacter(0, 0, new TextCharacter('>', ANSI.GREEN, ANSI.DEFAULT, SGR.BOLD));
+    textGraphics.setCharacter(0, 1, new TextCharacter('>', ANSI.RED, ANSI.DEFAULT));
+
     screen.refresh();
 
     String[] newInput = input;
     final StringBuilder word = new StringBuilder();
+    boolean mode = INSERT;
 
     while (true) {
       final KeyStroke keyStroke = screen.readInput();
+      final KeyType keyType = keyStroke.getKeyType();
 
-      if (keyStroke.getKeyType() == KeyType.Escape) {
-        screen.close();
-        return;
-      }
-
-      if (keyStroke.getKeyType() == KeyType.Enter) {
-        break;
-      }
-
-      if (keyStroke.getKeyType() == KeyType.Backspace) {
-        if (word.length() > 0) {
-          screen.setCharacter(word.length() + 1, 0, new TextCharacter(' ', ANSI.DEFAULT, ANSI.DEFAULT));
-          word.deleteCharAt(word.length() - 1);
+      if (keyType == KeyType.Escape) {
+        if (mode == INSERT && screen.getCursorPosition().getColumn() != 1) {
           screen.setCursorPosition(screen.getCursorPosition().withRelativeColumn(-1));
           screen.refresh();
-
-          newInput = ListUpdater.updateList(textGraphics, input, screen, word.toString());
         }
-      } else {
+
+        mode = COMMAND;
+      } else if (keyType == KeyType.Enter) {
+        screen.close();
+
+        if (newInput.length != 0) {
+          System.out.println(newInput[0]);
+        }
+
+        return;
+      } else if (keyType == KeyType.Backspace) {
+        if (mode == INSERT) {
+          if (word.length() > 0) {
+            screen.setCharacter(word.length() + 1, 0, new TextCharacter(' ', ANSI.DEFAULT, ANSI.DEFAULT));
+            word.deleteCharAt(word.length() - 1);
+            screen.setCursorPosition(screen.getCursorPosition().withRelativeColumn(-1));
+            screen.refresh();
+            newInput = Updater.updateList(textGraphics, input, screen, word.toString());
+          }
+        }
+      } else if (keyType == KeyType.Character) {
         final Character character = keyStroke.getCharacter();
 
-        if (character != null) {
-          word.append(character);
-          screen.setCharacter(word.length() + 1, 0,
-              new TextCharacter(character, ANSI.BLUE, ANSI.DEFAULT, SGR.BOLD, SGR.UNDERLINE));
+        if (mode == COMMAND) {
+          switch (character) {
+            case 'q' -> {
+              screen.close();
+              return;
+            }
+            case 'i' -> mode = INSERT;
+            case 'a' -> {
+              mode = INSERT;
+              if (screen.getCursorPosition().getColumn() != word.length() + 1) {
+                screen.setCursorPosition(screen.getCursorPosition().withRelativeColumn(1));
+                screen.refresh();
+              }
+            }
+          }
+        } else {
+          word.insert(screen.getCursorPosition().getColumn() - 2, character);
+          Updater.updateWord(screen, word.toString());
           screen.setCursorPosition(screen.getCursorPosition().withRelativeColumn(1));
           screen.refresh();
 
-          newInput = ListUpdater.updateList(textGraphics, input, screen, word.toString());
+          newInput = Updater.updateList(textGraphics, input, screen, word.toString());
         }
       }
-    }
-
-    screen.stopScreen();
-
-    if (newInput.length != 0) {
-      System.out.println(newInput[0]);
     }
   }
 
