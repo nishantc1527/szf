@@ -14,23 +14,14 @@ import com.googlecode.lanterna.screen.TabBehaviour;
 import com.googlecode.lanterna.screen.TerminalScreen;
 import com.googlecode.lanterna.terminal.DefaultTerminalFactory;
 
-import picocli.CommandLine;
-import picocli.CommandLine.Option;
 import szf.algorithm.Updater;
 
 public class Main {
 
-  @Option(names = { "-i",
-      "--input" }, description = "The Input Text, Separated By New Line Characters", required = true)
-  private String input;
-
   public static final boolean INSERT = false, COMMAND = true;
 
   public static void main(final String[] args) throws IOException {
-    final Main main = new Main();
-    new CommandLine(main).parseArgs(args);
-
-    final String[] input = main.input.split("\n");
+    final String[] input = args[0].split("\n");
 
     final DefaultTerminalFactory defaultTerminalFactory = new DefaultTerminalFactory();
     final Screen screen = new TerminalScreen(defaultTerminalFactory.createTerminal());
