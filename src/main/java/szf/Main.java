@@ -43,7 +43,7 @@ public class Main {
     final TextGraphics textGraphics = screen.newTextGraphics().setTabBehaviour(TabBehaviour.CONVERT_TO_FOUR_SPACES);
 
     for (int i = 1; i <= input.length && i < screen.getTerminalSize().getRows(); i++) {
-      textGraphics.putString(1, i, input[i - 1], SGR.BOLD);
+      textGraphics.putString(2, i, input[i - 1], SGR.BOLD);
     }
 
     textGraphics.setCharacter(0, 0, new TextCharacter('>', ANSI.GREEN, ANSI.DEFAULT, SGR.BOLD));
@@ -60,7 +60,7 @@ public class Main {
       final KeyType keyType = keyStroke.getKeyType();
 
       if (keyType == KeyType.Escape) {
-        if (mode == INSERT && screen.getCursorPosition().getColumn() != 1) {
+        if (mode == INSERT && screen.getCursorPosition().getColumn() != 2) {
           screen.setCursorPosition(screen.getCursorPosition().withRelativeColumn(-1));
           screen.refresh();
         }
@@ -96,7 +96,19 @@ public class Main {
             case 'i' -> mode = INSERT;
             case 'a' -> {
               mode = INSERT;
-              if (screen.getCursorPosition().getColumn() != word.length() + 1) {
+              if (screen.getCursorPosition().getColumn() != word.length() + 2) {
+                screen.setCursorPosition(screen.getCursorPosition().withRelativeColumn(1));
+                screen.refresh();
+              }
+            }
+            case 'h' -> {
+              if (screen.getCursorPosition().getColumn() != 2) {
+                screen.setCursorPosition(screen.getCursorPosition().withRelativeColumn(-1));
+                screen.refresh();
+              }
+            }
+            case 'l' -> {
+              if (screen.getCursorPosition().getColumn() != 2) {
                 screen.setCursorPosition(screen.getCursorPosition().withRelativeColumn(1));
                 screen.refresh();
               }
@@ -107,7 +119,6 @@ public class Main {
           Updater.updateWord(screen, word.toString());
           screen.setCursorPosition(screen.getCursorPosition().withRelativeColumn(1));
           screen.refresh();
-
           newInput = Updater.updateList(textGraphics, input, screen, word.toString());
         }
       }
