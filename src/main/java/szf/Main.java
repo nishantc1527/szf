@@ -109,8 +109,10 @@ public class Main {
           word.insert(screen.getCursorPosition().getColumn() - 2, character);
           Updater.updateWord(screen, word.toString());
           screen.setCursorPosition(screen.getCursorPosition().withRelativeColumn(1));
-          screen.refresh();
+
           newInput = Updater.updateList(textGraphics, input, screen, word.toString());
+
+          screen.refresh();
         }
       }
     }
