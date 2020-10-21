@@ -21,6 +21,8 @@ dependencies {
     implementation 'commons-io:commons-io:2.8.0'
     implementation 'com.googlecode.lanterna:lanterna:3.0.3'
 
+    implementation 'info.picocli:picocli:4.5.0'
+
     testImplementation 'junit:junit:4.13'
 
     implementation project(":algorithm")
