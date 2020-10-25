@@ -30,7 +30,7 @@ public class EditDistance {
 
     int insert = minDistance(word1, word2, memo, curr1 + 1, curr2) + 1;
     int delete = minDistance(word1, word2, memo, curr1, curr2 + 1) + 1;
-    int replace = minDistance(word1, word2, memo, curr1 + 1, curr2 + 1) + 1;
+    int replace = minDistance(word1, word2, memo, curr1 + 1, curr2 + 1) + 2;
     return memo[curr1][curr2] = NumberUtils.min(insert, delete, replace);
   }
 }
