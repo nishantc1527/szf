@@ -1,33 +1,36 @@
 plugins {
-    id 'java'
-    id 'application'
-    id 'com.github.johnrengelman.shadow' version '6.0.0'
+  id 'java'
+  id 'application'
+  id 'com.github.johnrengelman.shadow' version '6.0.0'
 }
 
 repositories {
-    jcenter()
+  jcenter()
 }
 
 tasks.jar.enabled = false
 
 shadowJar {
-    archiveName = 'szf.jar'
-        manifest {
-            attributes 'Main-Class': 'szf.Main'
-        }
+  archiveName = 'szf.jar'
+  manifest {
+    attributes 'Main-Class': 'szf.Main'
+  }
 }
 
 dependencies {
-    implementation 'commons-io:commons-io:2.8.0'
-    implementation 'com.googlecode.lanterna:lanterna:3.0.3'
+  implementation 'commons-io:commons-io:2.8.0'
+  implementation 'com.googlecode.lanterna:lanterna:3.0.3'
 
-    implementation 'info.picocli:picocli:4.5.0'
+  implementation 'info.picocli:picocli:4.5.0'
 
-    testImplementation 'junit:junit:4.13'
+  implementation 'org.apache.commons:commons-collections4:4.1'
+  implementation 'commons-lang:commons-lang:2.6'
 
-    implementation project(":algorithm")
+  testImplementation 'junit:junit:4.13'
+
+  // implementation project(":algorithm")
 }
 
 application {
-    mainClassName = 'szf.Main'
+  mainClassName = 'szf.Main'
 }

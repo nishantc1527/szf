@@ -1,7 +1,6 @@
 package szf;
 
-import java.io.IOException;
-
+import com.googlecode.lanterna.SGR;
 import com.googlecode.lanterna.TerminalPosition;
 import com.googlecode.lanterna.TextCharacter;
 import com.googlecode.lanterna.TextColor.ANSI;
@@ -12,15 +11,19 @@ import com.googlecode.lanterna.screen.Screen;
 import com.googlecode.lanterna.screen.TabBehaviour;
 import com.googlecode.lanterna.screen.TerminalScreen;
 import com.googlecode.lanterna.terminal.DefaultTerminalFactory;
-
+import org.apache.commons.lang.math.NumberUtils;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
-import szf.algorithm.Updater;
+
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.function.Predicate;
 
 public class Main {
 
-  @Option(names = { "-i",
-      "--input" }, description = "The Input Text, Separated By New Line Characters", required = true)
+  @Option(names = {"-i",
+          "--input"}, description = "The Input Text, Separated By New Line Characters", required = true)
   private String input;
 
   public static final boolean INSERT = false, COMMAND = true;
@@ -41,8 +44,8 @@ public class Main {
 
     final TextGraphics textGraphics = screen.newTextGraphics().setTabBehaviour(TabBehaviour.CONVERT_TO_FOUR_SPACES);
 
-    Updater.updateWord(textGraphics, "");
-    Updater.updateList(textGraphics, input, screen, "");
+    updateWord(textGraphics, "");
+    updateList(textGraphics, input, screen, "");
 
     screen.refresh();
 
@@ -76,7 +79,7 @@ public class Main {
             word.deleteCharAt(word.length() - 1);
             screen.setCursorPosition(screen.getCursorPosition().withRelativeColumn(-1));
             screen.refresh();
-            newInput = Updater.updateList(textGraphics, input, screen, word.toString());
+            newInput = updateList(textGraphics, input, screen, word.toString());
           }
         }
       } else if (keyType == KeyType.Character) {
@@ -111,13 +114,78 @@ public class Main {
           }
         } else {
           word.insert(screen.getCursorPosition().getColumn() - 2, character);
-          Updater.updateWord(textGraphics, word.toString());
+          updateWord(textGraphics, word.toString());
           screen.setCursorPosition(screen.getCursorPosition().withRelativeColumn(1));
-          newInput = Updater.updateList(textGraphics, input, screen, word.toString());
+          newInput = updateList(textGraphics, input, screen, word.toString());
           screen.refresh();
         }
       }
     }
+  }
+
+  public static void updateWord(TextGraphics textGraphics, String word) {
+    for (int i = 2; i < word.length() + 2; i++) {
+      textGraphics.setCharacter(i, 0,
+              new TextCharacter(word.charAt(i - 2), ANSI.BLUE, ANSI.DEFAULT, SGR.UNDERLINE, SGR.BOLD));
+    }
+
+    textGraphics.setCharacter(0, 0, new TextCharacter('>', ANSI.GREEN, ANSI.DEFAULT, SGR.BOLD));
+  }
+
+  public static String[] updateList(TextGraphics textGraphics, String[] input, Screen screen, String word) {
+    textGraphics.fillRectangle(new TerminalPosition(0, 1), screen.getTerminalSize().withRelativeRows(-1), ' ');
+    String[] newInput = Arrays.stream(input).filter(filter(word)).sorted(sort(word))
+            .toArray(String[]::new);
+
+    for (int i = 1; i < screen.getTerminalSize().getRows(); i++) {
+      if (i - 1 >= newInput.length) {
+        break;
+      }
+
+      textGraphics.putString(2, i, newInput[i - 1], SGR.BOLD);
+    }
+
+    textGraphics.setCharacter(0, 1, new TextCharacter('>', ANSI.RED, ANSI.DEFAULT));
+    return newInput;
+  }
+
+  public static Predicate<String> filter(String word) {
+    return (string) -> string.length() >= word.length();
+  }
+
+  public static Comparator<String> sort(String word) {
+    return Comparator.comparingInt(string -> minDistance(word, string));
+  }
+
+  public static int minDistance(String word1, String word2) {
+    return minDistance(word1, word2, new int[word1.length()][word2.length()], 0, 0);
+  }
+
+  private static int minDistance(String word1, String word2, int[][] memo, int curr1, int curr2) {
+    if (curr1 >= word1.length() && curr2 >= word2.length()) {
+      return 0;
+    }
+
+    if (curr1 >= word1.length()) {
+      return word2.length() - curr2;
+    }
+
+    if (curr2 >= word2.length()) {
+      return word1.length() - curr1;
+    }
+
+    if (memo[curr1][curr2] != 0) {
+      return memo[curr1][curr2];
+    }
+
+    if (word1.charAt(curr1) == word2.charAt(curr2)) {
+      return memo[curr1][curr2] = minDistance(word1, word2, memo, curr1 + 1, curr2 + 1);
+    }
+
+    int insert = minDistance(word1, word2, memo, curr1 + 1, curr2) + 1;
+    int delete = minDistance(word1, word2, memo, curr1, curr2 + 1) + 1;
+    int replace = minDistance(word1, word2, memo, curr1 + 1, curr2 + 1) + 2;
+    return memo[curr1][curr2] = NumberUtils.min(insert, delete, replace);
   }
 
 }
