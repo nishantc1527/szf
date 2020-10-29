@@ -124,7 +124,7 @@ public class Main {
     }
   }
 
-  public static void updateWord(TextGraphics textGraphics, String word) {
+  private static void updateWord(TextGraphics textGraphics, String word) {
     for (int i = 2; i < word.length() + 2; i++) {
       textGraphics.setCharacter(i, 0,
           new TextCharacter(word.charAt(i - 2), ANSI.BLUE, ANSI.DEFAULT, SGR.UNDERLINE, SGR.BOLD));
@@ -133,10 +133,10 @@ public class Main {
     textGraphics.setCharacter(0, 0, new TextCharacter('>', ANSI.GREEN, ANSI.DEFAULT, SGR.BOLD));
   }
 
-  public static String[] updateList(TextGraphics textGraphics, String[] input, Screen screen, String word) {
+  private static String[] updateList(TextGraphics textGraphics, String[] input, Screen screen, String word) {
     textGraphics.fillRectangle(new TerminalPosition(0, 1), screen.getTerminalSize().withRelativeRows(-1), ' ');
     String[] newInput = Arrays.stream(input).filter((string) -> string.length() >= word.length())
-        .sorted(Comparator.comparingInt(string -> minDistance(word, string))).toArray(String[]::new);
+        .sorted(Comparator.comparingInt(string -> levenshtein(word, string))).toArray(String[]::new);
 
     for (int i = 1; i < screen.getTerminalSize().getRows(); i++) {
       if (i - 1 >= newInput.length) {
@@ -150,35 +150,30 @@ public class Main {
     return newInput;
   }
 
-  public static int minDistance(String word1, String word2) {
-    return minDistance(word1, word2, new int[word1.length()][word2.length()], 0, 0);
-  }
+  private static int levenshtein(String word1String, String word2String) {
+    char[] word1 = word1String.toCharArray();
+    char[] word2 = word2String.toCharArray();
+    int[][] dp = new int[word1.length + 1][word2.length + 1];
 
-  private static int minDistance(String word1, String word2, int[][] memo, int curr1, int curr2) {
-    if (curr1 >= word1.length() && curr2 >= word2.length()) {
-      return 0;
+    for (int i = 1; i < dp.length; i++) {
+      dp[i][0] = i;
     }
 
-    if (curr1 >= word1.length()) {
-      return word2.length() - curr2;
+    for (int i = 1; i < dp[0].length; i++) {
+      dp[0][i] = i;
     }
 
-    if (curr2 >= word2.length()) {
-      return word1.length() - curr1;
+    for (int i = 1; i < dp.length; i++) {
+      for (int j = 1; j < dp[i].length; j++) {
+        if (word1[i - 1] == word2[j - 1]) {
+          dp[i][j] = dp[i - 1][j - 1];
+        } else {
+          dp[i][j] = 1 + NumberUtils.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]);
+        }
+      }
     }
 
-    if (memo[curr1][curr2] != 0) {
-      return memo[curr1][curr2];
-    }
-
-    if (word1.charAt(curr1) == word2.charAt(curr2)) {
-      return memo[curr1][curr2] = minDistance(word1, word2, memo, curr1 + 1, curr2 + 1);
-    }
-
-    int insert = minDistance(word1, word2, memo, curr1 + 1, curr2) + 1;
-    int delete = minDistance(word1, word2, memo, curr1, curr2 + 1) + 1;
-    int replace = minDistance(word1, word2, memo, curr1 + 1, curr2 + 1) + 2;
-    return memo[curr1][curr2] = NumberUtils.min(insert, delete, replace);
+    return dp[dp.length - 1][dp[0].length - 1];
   }
 
 }
