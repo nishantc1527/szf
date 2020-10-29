@@ -2,7 +2,6 @@ package szf;
 
 import java.io.IOException;
 
-import com.googlecode.lanterna.SGR;
 import com.googlecode.lanterna.TerminalPosition;
 import com.googlecode.lanterna.TextCharacter;
 import com.googlecode.lanterna.TextColor.ANSI;
@@ -42,12 +41,8 @@ public class Main {
 
     final TextGraphics textGraphics = screen.newTextGraphics().setTabBehaviour(TabBehaviour.CONVERT_TO_FOUR_SPACES);
 
-    for (int i = 1; i <= input.length && i < screen.getTerminalSize().getRows(); i++) {
-      textGraphics.putString(2, i, input[i - 1], SGR.BOLD);
-    }
-
-    textGraphics.setCharacter(0, 0, new TextCharacter('>', ANSI.GREEN, ANSI.DEFAULT, SGR.BOLD));
-    textGraphics.setCharacter(0, 1, new TextCharacter('>', ANSI.RED, ANSI.DEFAULT));
+    Updater.updateWord(textGraphics, "");
+    Updater.updateList(textGraphics, input, screen, "");
 
     screen.refresh();
 
@@ -116,11 +111,9 @@ public class Main {
           }
         } else {
           word.insert(screen.getCursorPosition().getColumn() - 2, character);
-          Updater.updateWord(screen, word.toString());
+          Updater.updateWord(textGraphics, word.toString());
           screen.setCursorPosition(screen.getCursorPosition().withRelativeColumn(1));
-
           newInput = Updater.updateList(textGraphics, input, screen, word.toString());
-
           screen.refresh();
         }
       }
