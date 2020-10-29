@@ -1,5 +1,9 @@
 package szf;
 
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Comparator;
+
 import com.googlecode.lanterna.SGR;
 import com.googlecode.lanterna.TerminalPosition;
 import com.googlecode.lanterna.TextCharacter;
@@ -11,19 +15,16 @@ import com.googlecode.lanterna.screen.Screen;
 import com.googlecode.lanterna.screen.TabBehaviour;
 import com.googlecode.lanterna.screen.TerminalScreen;
 import com.googlecode.lanterna.terminal.DefaultTerminalFactory;
+
 import org.apache.commons.lang.math.NumberUtils;
+
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.function.Predicate;
-
 public class Main {
 
-  @Option(names = {"-i",
-          "--input"}, description = "The Input Text, Separated By New Line Characters", required = true)
+  @Option(names = { "-i",
+      "--input" }, description = "The Input Text, Separated By New Line Characters", required = true)
   private String input;
 
   public static final boolean INSERT = false, COMMAND = true;
@@ -126,7 +127,7 @@ public class Main {
   public static void updateWord(TextGraphics textGraphics, String word) {
     for (int i = 2; i < word.length() + 2; i++) {
       textGraphics.setCharacter(i, 0,
-              new TextCharacter(word.charAt(i - 2), ANSI.BLUE, ANSI.DEFAULT, SGR.UNDERLINE, SGR.BOLD));
+          new TextCharacter(word.charAt(i - 2), ANSI.BLUE, ANSI.DEFAULT, SGR.UNDERLINE, SGR.BOLD));
     }
 
     textGraphics.setCharacter(0, 0, new TextCharacter('>', ANSI.GREEN, ANSI.DEFAULT, SGR.BOLD));
@@ -134,8 +135,8 @@ public class Main {
 
   public static String[] updateList(TextGraphics textGraphics, String[] input, Screen screen, String word) {
     textGraphics.fillRectangle(new TerminalPosition(0, 1), screen.getTerminalSize().withRelativeRows(-1), ' ');
-    String[] newInput = Arrays.stream(input).filter(filter(word)).sorted(sort(word))
-            .toArray(String[]::new);
+    String[] newInput = Arrays.stream(input).filter((string) -> string.length() >= word.length())
+        .sorted(Comparator.comparingInt(string -> minDistance(word, string))).toArray(String[]::new);
 
     for (int i = 1; i < screen.getTerminalSize().getRows(); i++) {
       if (i - 1 >= newInput.length) {
@@ -147,14 +148,6 @@ public class Main {
 
     textGraphics.setCharacter(0, 1, new TextCharacter('>', ANSI.RED, ANSI.DEFAULT));
     return newInput;
-  }
-
-  public static Predicate<String> filter(String word) {
-    return (string) -> string.length() >= word.length();
-  }
-
-  public static Comparator<String> sort(String word) {
-    return Comparator.comparingInt(string -> minDistance(word, string));
   }
 
   public static int minDistance(String word1, String word2) {
