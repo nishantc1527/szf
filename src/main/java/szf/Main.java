@@ -124,7 +124,7 @@ public class Main {
     }
   }
 
-  private static void updateWord(TextGraphics textGraphics, String word) {
+  private static void updateWord(final TextGraphics textGraphics, final String word) {
     for (int i = 2; i < word.length() + 2; i++) {
       textGraphics.setCharacter(i, 0,
           new TextCharacter(word.charAt(i - 2), ANSI.BLUE, ANSI.DEFAULT, SGR.UNDERLINE, SGR.BOLD));
@@ -133,9 +133,10 @@ public class Main {
     textGraphics.setCharacter(0, 0, new TextCharacter('>', ANSI.GREEN, ANSI.DEFAULT, SGR.BOLD));
   }
 
-  private static String[] updateList(TextGraphics textGraphics, String[] input, Screen screen, String word) {
+  private static String[] updateList(final TextGraphics textGraphics, final String[] input, final Screen screen,
+      final String word) {
     textGraphics.fillRectangle(new TerminalPosition(0, 1), screen.getTerminalSize().withRelativeRows(-1), ' ');
-    String[] newInput = Arrays.stream(input).filter((string) -> string.length() >= word.length())
+    final String[] newInput = Arrays.stream(input).filter((string) -> string.length() >= word.length())
         .sorted(Comparator.comparingInt(string -> levenshtein(word, string))).toArray(String[]::new);
 
     for (int i = 1; i < screen.getTerminalSize().getRows(); i++) {
@@ -150,10 +151,10 @@ public class Main {
     return newInput;
   }
 
-  private static int levenshtein(String word1String, String word2String) {
-    char[] word1 = word1String.toCharArray();
-    char[] word2 = word2String.toCharArray();
-    int[][] dp = new int[word1.length + 1][word2.length + 1];
+  private static int levenshtein(final String word1String, final String word2String) {
+    final char[] word1 = word1String.toCharArray();
+    final char[] word2 = word2String.toCharArray();
+    final int[][] dp = new int[word1.length + 1][word2.length + 1];
 
     for (int i = 1; i < dp.length; i++) {
       dp[i][0] = i;
@@ -168,12 +169,45 @@ public class Main {
         if (word1[i - 1] == word2[j - 1]) {
           dp[i][j] = dp[i - 1][j - 1];
         } else {
-          dp[i][j] = 1 + NumberUtils.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]);
+          dp[i][j] = 1 + dp[i][j - 1];
         }
       }
     }
 
     return dp[dp.length - 1][dp[0].length - 1];
+  }
+
+  // Copied from fzf (https://github.com/junegunn/fzf)
+  // Given affffffbffabc as input and abc as word
+  //
+  // Forward scan:
+  //
+  // affffffbffabc
+  // a______b____c
+  //
+  // Backwards scan:
+  // affffffbffabc
+  // __________abc
+  //
+  // Backwards scan is more successful (smaller string), so output is 3.
+
+  private static String findSection(final String word, final String input) {
+    String forwards = forwards(word, input, 0, 0);
+    String backwards = backwards(word, input, word.length() - 1, input.length() - 1);
+
+    if (forwards.length() > backwards.length()) {
+      return forwards;
+    } else {
+      return backwards;
+    }
+  }
+
+  private static String forwards(final String word, final String input, final int i, final int j) {
+    return null;
+  }
+
+  private static String backwards(String word, String input2, int i, int j) {
+    return null;
   }
 
 }

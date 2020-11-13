@@ -2,6 +2,7 @@ plugins {
   id 'java'
   id 'application'
   id 'com.github.johnrengelman.shadow' version '6.0.0'
+  id "com.scuilion.syntastic" version "0.3.8"
 }
 
 repositories {
@@ -12,6 +13,7 @@ tasks.jar.enabled = false
 
 shadowJar {
   archiveName = 'szf.jar'
+
   manifest {
     attributes 'Main-Class': 'szf.Main'
   }
@@ -27,8 +29,6 @@ dependencies {
   implementation 'commons-lang:commons-lang:2.6'
 
   testImplementation 'junit:junit:4.13'
-
-  // implementation project(":algorithm")
 }
 
 application {
