@@ -23,8 +23,6 @@ dependencies {
   implementation 'commons-io:commons-io:2.8.0'
   implementation 'com.googlecode.lanterna:lanterna:3.0.3'
 
-  implementation 'info.picocli:picocli:4.5.0'
-
   implementation 'org.apache.commons:commons-collections4:4.1'
   implementation 'commons-lang:commons-lang:2.6'
 

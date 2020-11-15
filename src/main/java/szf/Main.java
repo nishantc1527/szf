@@ -1,9 +1,5 @@
 package szf;
 
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Comparator;
-
 import com.googlecode.lanterna.SGR;
 import com.googlecode.lanterna.TerminalPosition;
 import com.googlecode.lanterna.TextCharacter;
@@ -11,76 +7,73 @@ import com.googlecode.lanterna.TextColor.ANSI;
 import com.googlecode.lanterna.graphics.TextGraphics;
 import com.googlecode.lanterna.input.KeyStroke;
 import com.googlecode.lanterna.input.KeyType;
-import com.googlecode.lanterna.screen.Screen;
-import com.googlecode.lanterna.screen.TabBehaviour;
-import com.googlecode.lanterna.screen.TerminalScreen;
 import com.googlecode.lanterna.terminal.DefaultTerminalFactory;
+import com.googlecode.lanterna.terminal.Terminal;
+import com.googlecode.lanterna.terminal.ansi.UnixLikeTerminal;
+import com.googlecode.lanterna.terminal.ansi.UnixTerminal;
 
-import org.apache.commons.lang.math.NumberUtils;
-
-import picocli.CommandLine;
-import picocli.CommandLine.Option;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Comparator;
 
 public class Main {
-
-  @Option(names = { "-i",
-      "--input" }, description = "The Input Text, Separated By New Line Characters", required = true)
-  private String input;
 
   public static final boolean INSERT = false, COMMAND = true;
 
   public static void main(final String[] args) throws IOException {
-    final Main main = new Main();
-    new CommandLine(main).parseArgs(args);
-
-    final String[] input = main.input.split("\n");
+    final String[] input = args[0].split(" ");
 
     final DefaultTerminalFactory defaultTerminalFactory = new DefaultTerminalFactory();
-    final Screen screen = new TerminalScreen(defaultTerminalFactory.createTerminal());
+    final Terminal terminal = defaultTerminalFactory.createTerminal();
 
-    screen.startScreen();
-    screen.setCursorPosition(new TerminalPosition(2, 0));
+    final TerminalPosition initial = terminal.getCursorPosition();
+    final TextGraphics textGraphics = terminal.newTextGraphics();
 
-    screen.refresh();
+    textGraphics.setCharacter(initial, new TextCharacter('>', ANSI.GREEN, ANSI.DEFAULT, SGR.BOLD));
+    textGraphics.setCharacter(initial.withRelativeRow(1), new TextCharacter('>', ANSI.RED, ANSI.DEFAULT, SGR.BOLD));
+    terminal.flush();
 
-    final TextGraphics textGraphics = screen.newTextGraphics().setTabBehaviour(TabBehaviour.CONVERT_TO_FOUR_SPACES);
+    updateWord(terminal, textGraphics, initial, "");
+    updateList(terminal, textGraphics, initial, "", input);
 
-    updateWord(textGraphics, "");
-    updateList(textGraphics, input, screen, "");
-
-    screen.refresh();
+    terminal.setCursorPosition(initial.withRelativeColumn(2));
+    terminal.flush();
 
     String[] newInput = input;
     final StringBuilder word = new StringBuilder();
     boolean mode = INSERT;
 
     while (true) {
-      final KeyStroke keyStroke = screen.readInput();
+      final KeyStroke keyStroke = terminal.readInput();
       final KeyType keyType = keyStroke.getKeyType();
 
       if (keyType == KeyType.Escape) {
-        if (mode == INSERT && screen.getCursorPosition().getColumn() != 2) {
-          screen.setCursorPosition(screen.getCursorPosition().withRelativeColumn(-1));
-          screen.refresh();
+        if (mode == INSERT && terminal.getCursorPosition().getColumn() != 2) {
+          terminal.setCursorPosition(terminal.getCursorPosition().withRelativeColumn(-1));
+          terminal.flush();
         }
 
         mode = COMMAND;
       } else if (keyType == KeyType.Enter) {
-        screen.close();
-
         if (newInput.length != 0) {
+          textGraphics.setForegroundColor(ANSI.DEFAULT);
+          textGraphics.fillRectangle(initial, terminal.getTerminalSize(), ' ');
+          terminal.setCursorPosition(initial);
           System.out.println(newInput[0]);
         }
 
+        terminal.close();
         return;
       } else if (keyType == KeyType.Backspace) {
         if (mode == INSERT) {
-          if (word.length() > 0) {
-            screen.setCharacter(word.length() + 1, 0, new TextCharacter(' ', ANSI.DEFAULT, ANSI.DEFAULT));
-            word.deleteCharAt(word.length() - 1);
-            screen.setCursorPosition(screen.getCursorPosition().withRelativeColumn(-1));
-            screen.refresh();
-            newInput = updateList(textGraphics, input, screen, word.toString());
+          if (terminal.getCursorPosition().getColumn() != 2) {
+            TerminalPosition tempPosition = terminal.getCursorPosition();
+            textGraphics.setCharacter(initial.withRelativeColumn(word.length() + 1), ' ');
+            word.deleteCharAt(tempPosition.getColumn() - 3);
+            updateWord(terminal ,textGraphics, initial, word.toString());
+            newInput = updateList(terminal, textGraphics, initial, word.toString(), input);
+            terminal.setCursorPosition(tempPosition.withRelativeColumn(-1));
+            terminal.flush();
           }
         }
       } else if (keyType == KeyType.Character) {
@@ -89,69 +82,71 @@ public class Main {
         if (mode == COMMAND) {
           switch (character) {
             case 'q' -> {
-              screen.close();
+              terminal.close();
               return;
             }
             case 'i' -> mode = INSERT;
             case 'a' -> {
               mode = INSERT;
-              if (screen.getCursorPosition().getColumn() != word.length() + 2) {
-                screen.setCursorPosition(screen.getCursorPosition().withRelativeColumn(1));
-                screen.refresh();
+              if (terminal.getCursorPosition().getColumn() != word.length() + 2) {
+                terminal.setCursorPosition(terminal.getCursorPosition().withRelativeColumn(1));
+                terminal.flush();
               }
             }
             case 'h' -> {
-              if (screen.getCursorPosition().getColumn() != 2) {
-                screen.setCursorPosition(screen.getCursorPosition().withRelativeColumn(-1));
-                screen.refresh();
+              if (terminal.getCursorPosition().getColumn() != 2) {
+                terminal.setCursorPosition(terminal.getCursorPosition().withRelativeColumn(-1));
+                terminal.flush();
               }
             }
             case 'l' -> {
-              if (screen.getCursorPosition().getColumn() != word.length() + 1) {
-                screen.setCursorPosition(screen.getCursorPosition().withRelativeColumn(1));
-                screen.refresh();
+              if (terminal.getCursorPosition().getColumn() != word.length() + 1) {
+                terminal.setCursorPosition(terminal.getCursorPosition().withRelativeColumn(1));
+                terminal.flush();
               }
             }
           }
         } else {
-          word.insert(screen.getCursorPosition().getColumn() - 2, character);
-          updateWord(textGraphics, word.toString());
-          screen.setCursorPosition(screen.getCursorPosition().withRelativeColumn(1));
-          newInput = updateList(textGraphics, input, screen, word.toString());
-          screen.refresh();
+          TerminalPosition tempPosition = terminal.getCursorPosition();
+          word.insert(tempPosition.getColumn() - 2, character);
+          updateWord(terminal, textGraphics, initial, word.toString());
+          newInput = updateList(terminal, textGraphics, initial, word.toString(), input);
+          terminal.setCursorPosition(tempPosition.withRelativeColumn(1));
+          terminal.flush();
         }
       }
     }
   }
 
-  private static void updateWord(final TextGraphics textGraphics, final String word) {
-    for (int i = 2; i < word.length() + 2; i++) {
-      textGraphics.setCharacter(i, 0,
-          new TextCharacter(word.charAt(i - 2), ANSI.BLUE, ANSI.DEFAULT, SGR.UNDERLINE, SGR.BOLD));
-    }
-
-    textGraphics.setCharacter(0, 0, new TextCharacter('>', ANSI.GREEN, ANSI.DEFAULT, SGR.BOLD));
+  public static void updateWord(final Terminal terminal, final TextGraphics textGraphics, final TerminalPosition initial, final String word)
+          throws IOException {
+    textGraphics.setForegroundColor(ANSI.BLUE);
+    textGraphics.putString(initial.withRelativeColumn(2), word);
+    textGraphics.setForegroundColor(ANSI.DEFAULT);
+    terminal.flush();
   }
 
-  private static String[] updateList(final TextGraphics textGraphics, final String[] input, final Screen screen,
-      final String word) {
-    textGraphics.fillRectangle(new TerminalPosition(0, 1), screen.getTerminalSize().withRelativeRows(-1), ' ');
+  public static String[] updateList(final Terminal terminal, final TextGraphics textGraphics, final TerminalPosition initial, final String word,
+                                    final String[] input) throws IOException {
     final String[] newInput = Arrays.stream(input).filter((string) -> string.length() >= word.length())
-        .sorted(Comparator.comparingInt(string -> levenshtein(word, string))).toArray(String[]::new);
+            .sorted(Comparator.comparingInt(string -> levenshtein(word, string))).toArray(String[]::new);
 
-    for (int i = 1; i < screen.getTerminalSize().getRows(); i++) {
-      if (i - 1 >= newInput.length) {
-        break;
-      }
+    textGraphics.setForegroundColor(ANSI.RED);
 
-      textGraphics.putString(2, i, newInput[i - 1], SGR.BOLD);
+    int initialRow = initial.getRow();
+    int columns = terminal.getTerminalSize().getColumns();
+
+    for (int i = initialRow + 1; i < terminal.getTerminalSize().getRows() && i - (initialRow + 1) < newInput.length; i++) {
+      String curr = String.format("%-" + columns + "s", newInput[i - (initialRow + 1)]);
+      textGraphics.putString(2, i, curr);
     }
 
-    textGraphics.setCharacter(0, 1, new TextCharacter('>', ANSI.RED, ANSI.DEFAULT));
+    terminal.setForegroundColor(ANSI.DEFAULT);
+    terminal.flush();
     return newInput;
   }
 
-  private static int levenshtein(final String word1String, final String word2String) {
+  public static int levenshtein(final String word1String, final String word2String) {
     final char[] word1 = word1String.toCharArray();
     final char[] word2 = word2String.toCharArray();
     final int[][] dp = new int[word1.length + 1][word2.length + 1];
@@ -177,23 +172,41 @@ public class Main {
     return dp[dp.length - 1][dp[0].length - 1];
   }
 
-  // Copied from fzf (https://github.com/junegunn/fzf)
-  // Given affffffbffabc as input and abc as word
-  //
-  // Forward scan:
-  //
-  // affffffbffabc
-  // a______b____c
-  //
-  // Backwards scan:
-  // affffffbffabc
-  // __________abc
-  //
-  // Backwards scan is more successful (smaller string), so output is 3.
+  /**
+   * TODO Work in progress
+   * <p>
+   * Finds the shortest substring of a dictionary word
+   * containing the most amount of letters from the input string.
+   * <p>
+   * Inspired by the algorithm from <a href="https://github.com/junegunn/fzf/blob/master/src/algo/algo.go#L5">fzf</a>.
+   * Given affffffbffabjkc as a dictionary word and abc as the input word
+   * <p>
+   * Scan 1:
+   * <p>
+   * <pre>
+   *     {@code
+   * affffffbffabjkc
+   * a      b  c
+   *     }
+   *   </pre>
+   * <p>
+   * Scan 2:
+   * <p>
+   * <pre>
+   *     {@code
+   * affffffbffabjkc
+   *       ab  c
+   *     }
+   *   </pre>
+   * <p>
+   * Each scan moves to the next position and starts scanning.
+   * Scan 2 is more successful (smaller string), so output is "abjkc".
+   */
 
-  private static String findSection(final String word, final String input) {
-    String forwards = forwards(word, input, 0, 0);
-    String backwards = backwards(word, input, word.length() - 1, input.length() - 1);
+  @SuppressWarnings("all")
+  public static String findSubstring(String inputString, String dictionaryWord) {
+    final String forwards = forwards(dictionaryWord, inputString, 0, 0);
+    final String backwards = backwards(dictionaryWord, inputString, dictionaryWord.length() - 1, inputString.length() - 1);
 
     if (forwards.length() > backwards.length()) {
       return forwards;
@@ -202,11 +215,13 @@ public class Main {
     }
   }
 
-  private static String forwards(final String word, final String input, final int i, final int j) {
+  @SuppressWarnings({"SameParameterValue", "SameReturnValue", "unused"})
+  public static String forwards(final String inputString, final String dictionaryWord, final int i, final int j) {
     return null;
   }
 
-  private static String backwards(String word, String input2, int i, int j) {
+  @SuppressWarnings({"SameParameterValue", "SameReturnValue", "unused"})
+  public static String backwards(final String inputString, final String dictionaryWord, final int i, final int j) {
     return null;
   }
 
