@@ -1,5 +1,11 @@
 package szf;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.Arrays;
+import java.util.Comparator;
+
 import com.googlecode.lanterna.SGR;
 import com.googlecode.lanterna.TerminalPosition;
 import com.googlecode.lanterna.TextCharacter;
@@ -9,26 +15,19 @@ import com.googlecode.lanterna.input.KeyStroke;
 import com.googlecode.lanterna.input.KeyType;
 import com.googlecode.lanterna.terminal.DefaultTerminalFactory;
 import com.googlecode.lanterna.terminal.Terminal;
-import com.googlecode.lanterna.terminal.ansi.UnixLikeTerminal;
-import com.googlecode.lanterna.terminal.ansi.UnixTerminal;
-import org.jline.utils.Levenshtein;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.Arrays;
-import java.util.Comparator;
+import org.jline.utils.Levenshtein;
 
 public class Main {
 
   public static final boolean INSERT = false, COMMAND = true;
 
   public static void main(final String[] args) throws IOException {
-    StringBuilder standardInput = new StringBuilder();
-    BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(System.in));
+    final StringBuilder standardInput = new StringBuilder();
+    final BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(System.in));
     String nextLine;
 
-    while((nextLine = bufferedReader.readLine()) != null) {
+    while ((nextLine = bufferedReader.readLine()) != null) {
       standardInput.append(nextLine);
     }
 
@@ -78,10 +77,10 @@ public class Main {
       } else if (keyType == KeyType.Backspace) {
         if (mode == INSERT) {
           if (terminal.getCursorPosition().getColumn() != 2) {
-            TerminalPosition tempPosition = terminal.getCursorPosition();
+            final TerminalPosition tempPosition = terminal.getCursorPosition();
             textGraphics.setCharacter(initial.withRelativeColumn(word.length() + 1), ' ');
             word.deleteCharAt(tempPosition.getColumn() - 3);
-            updateWord(terminal ,textGraphics, initial, word.toString());
+            updateWord(terminal, textGraphics, initial, word.toString());
             newInput = updateList(terminal, textGraphics, initial, word.toString(), input);
             terminal.setCursorPosition(tempPosition.withRelativeColumn(-1));
             terminal.flush();
@@ -118,7 +117,7 @@ public class Main {
             }
           }
         } else {
-          TerminalPosition tempPosition = terminal.getCursorPosition();
+          final TerminalPosition tempPosition = terminal.getCursorPosition();
           word.insert(tempPosition.getColumn() - 2, character);
           updateWord(terminal, textGraphics, initial, word.toString());
           newInput = updateList(terminal, textGraphics, initial, word.toString(), input);
@@ -129,26 +128,27 @@ public class Main {
     }
   }
 
-  public static void updateWord(final Terminal terminal, final TextGraphics textGraphics, final TerminalPosition initial, final String word)
-          throws IOException {
+  public static void updateWord(final Terminal terminal, final TextGraphics textGraphics,
+      final TerminalPosition initial, final String word) throws IOException {
     textGraphics.setForegroundColor(ANSI.BLUE);
     textGraphics.putString(initial.withRelativeColumn(2), word);
     textGraphics.setForegroundColor(ANSI.DEFAULT);
     terminal.flush();
   }
 
-  public static String[] updateList(final Terminal terminal, final TextGraphics textGraphics, final TerminalPosition initial, final String word,
-                                    final String[] input) throws IOException {
+  public static String[] updateList(final Terminal terminal, final TextGraphics textGraphics,
+      final TerminalPosition initial, final String word, final String[] input) throws IOException {
     final String[] newInput = Arrays.stream(input).filter((string) -> string.length() >= word.length())
-            .sorted(Comparator.comparingInt(string -> Levenshtein.distance(word, string))).toArray(String[]::new);
+        .sorted(Comparator.comparingInt(string -> Levenshtein.distance(word, string))).toArray(String[]::new);
 
     textGraphics.setForegroundColor(ANSI.RED);
 
-    int initialRow = initial.getRow();
-    int columns = terminal.getTerminalSize().getColumns();
+    final int initialRow = initial.getRow();
+    final int columns = terminal.getTerminalSize().getColumns();
 
-    for (int i = initialRow + 1; i < terminal.getTerminalSize().getRows() && i - (initialRow + 1) < newInput.length; i++) {
-      String curr = String.format("%-" + columns + "s", newInput[i - (initialRow + 1)]);
+    for (int i = initialRow + 1; i < terminal.getTerminalSize().getRows()
+        && i - (initialRow + 1) < newInput.length; i++) {
+      final String curr = String.format("%-" + columns + "s", newInput[i - (initialRow + 1)]);
       textGraphics.putString(2, i, curr);
     }
 
@@ -160,38 +160,42 @@ public class Main {
   /**
    * TODO Work in progress
    * <p>
-   * Finds the shortest substring of a dictionary word
-   * containing the most amount of letters from the input string.
+   * Finds the shortest substring of a dictionary word containing the most amount
+   * of letters from the input string.
    * <p>
-   * Inspired by the algorithm from <a href="https://github.com/junegunn/fzf/blob/master/src/algo/algo.go#L5">fzf</a>.
+   * Inspired by the algorithm from <a href=
+   * "https://github.com/junegunn/fzf/blob/master/src/algo/algo.go#L5">fzf</a>.
    * Given affffffbffabjkc as a dictionary word and abc as the input word
    * <p>
    * Scan 1:
    * <p>
+   * 
    * <pre>
    *     {@code
    * affffffbffabjkc
    * a      b  c
    *     }
-   *   </pre>
+   * </pre>
    * <p>
    * Scan 2:
    * <p>
+   * 
    * <pre>
    *     {@code
    * affffffbffabjkc
    *       ab  c
    *     }
-   *   </pre>
+   * </pre>
    * <p>
-   * Each scan moves to the next position and starts scanning.
-   * Scan 2 is more successful (smaller string), so output is "abjkc".
+   * Each scan moves to the next position and starts scanning. Scan 2 is more
+   * successful (smaller string), so output is "abjkc".
    */
 
   @SuppressWarnings("all")
-  public static String findSubstring(String inputString, String dictionaryWord) {
+  public static String findSubstring(final String inputString, final String dictionaryWord) {
     final String forwards = forwards(dictionaryWord, inputString, 0, 0);
-    final String backwards = backwards(dictionaryWord, inputString, dictionaryWord.length() - 1, inputString.length() - 1);
+    final String backwards = backwards(dictionaryWord, inputString, dictionaryWord.length() - 1,
+        inputString.length() - 1);
 
     if (forwards.length() > backwards.length()) {
       return forwards;
@@ -200,12 +204,12 @@ public class Main {
     }
   }
 
-  @SuppressWarnings({"SameParameterValue", "SameReturnValue", "unused"})
+  @SuppressWarnings({ "SameParameterValue", "SameReturnValue", "unused" })
   public static String forwards(final String inputString, final String dictionaryWord, final int i, final int j) {
     return null;
   }
 
-  @SuppressWarnings({"SameParameterValue", "SameReturnValue", "unused"})
+  @SuppressWarnings({ "SameParameterValue", "SameReturnValue", "unused" })
   public static String backwards(final String inputString, final String dictionaryWord, final int i, final int j) {
     return null;
   }
