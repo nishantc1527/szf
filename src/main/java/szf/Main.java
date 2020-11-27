@@ -1,8 +1,6 @@
 package szf;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.Comparator;
 
@@ -16,22 +14,12 @@ import com.googlecode.lanterna.input.KeyType;
 import com.googlecode.lanterna.terminal.DefaultTerminalFactory;
 import com.googlecode.lanterna.terminal.Terminal;
 
-import org.jline.utils.Levenshtein;
-
 public class Main {
 
   public static final boolean INSERT = false, COMMAND = true;
 
   public static void main(final String[] args) throws IOException {
-    final StringBuilder standardInput = new StringBuilder();
-    final BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(System.in));
-    String nextLine;
-
-    while ((nextLine = bufferedReader.readLine()) != null) {
-      standardInput.append(nextLine);
-    }
-
-    final String[] input = standardInput.toString().split(" ");
+    final String[] input = String.join(" ", args).split(" ");
 
     final DefaultTerminalFactory defaultTerminalFactory = new DefaultTerminalFactory();
     final Terminal terminal = defaultTerminalFactory.createTerminal();
@@ -138,9 +126,9 @@ public class Main {
 
   public static String[] updateList(final Terminal terminal, final TextGraphics textGraphics,
       final TerminalPosition initial, final String word, final String[] input) throws IOException {
-    final String[] newInput = Arrays.stream(input).filter((string) -> string.length() >= word.length())
-        .sorted(Comparator.comparingInt(string -> Levenshtein.distance(word, string))).toArray(String[]::new);
 
+    final String[] newInput = Arrays.stream(input).filter((string) -> string.length() >= word.length())
+            .sorted(Comparator.comparingInt(string -> levenshtein(word, string))).toArray(String[]::new);
     textGraphics.setForegroundColor(ANSI.RED);
 
     final int initialRow = initial.getRow();
@@ -155,6 +143,32 @@ public class Main {
     terminal.setForegroundColor(ANSI.DEFAULT);
     terminal.flush();
     return newInput;
+  }
+
+  public static int levenshtein(final String word1String, final String word2String) {
+    final char[] word1 = word1String.toCharArray();
+    final char[] word2 = word2String.toCharArray();
+    final int[][] dp = new int[word1.length + 1][word2.length + 1];
+
+    for (int i = 1; i < dp.length; i++) {
+      dp[i][0] = i;
+    }
+
+    for (int i = 1; i < dp[0].length; i++) {
+      dp[0][i] = i;
+    }
+
+    for (int i = 1; i < dp.length; i++) {
+      for (int j = 1; j < dp[i].length; j++) {
+        if (word1[i - 1] == word2[j - 1]) {
+          dp[i][j] = dp[i - 1][j - 1];
+        } else {
+          dp[i][j] = 1 + dp[i][j - 1];
+        }
+      }
+    }
+
+    return dp[dp.length - 1][dp[0].length - 1];
   }
 
   /**
