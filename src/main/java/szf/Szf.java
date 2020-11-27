@@ -1,9 +1,5 @@
 package szf;
 
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Comparator;
-
 import com.googlecode.lanterna.SGR;
 import com.googlecode.lanterna.TerminalPosition;
 import com.googlecode.lanterna.TextCharacter;
@@ -14,10 +10,25 @@ import com.googlecode.lanterna.input.KeyType;
 import com.googlecode.lanterna.terminal.DefaultTerminalFactory;
 import com.googlecode.lanterna.terminal.Terminal;
 
-public class Main {
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Comparator;
+
+/**
+ * The main class containing the entry point.
+ */
+public class Szf {
 
   public static final boolean INSERT = false, COMMAND = true;
 
+  /**
+   * Official entry point.
+   *
+   * @param args The command line arguments representing what items
+   *             are to be searched through. The items are a list of
+   *             words separated by a single space.
+   * @throws IOException When there is an error with the terminal emulator
+   */
   public static void main(final String[] args) throws IOException {
     final String[] input = String.join(" ", args).split(" ");
 
@@ -116,16 +127,40 @@ public class Main {
     }
   }
 
+  /**
+   * Updates the word that is being typed by the user. This method
+   * is called whenever the user makes a change to his input.
+   *
+   * @param terminal     The {@link Terminal} object that is being used.
+   * @param textGraphics An instance of a {@link TextGraphics} object.
+   * @param initial      The initial position this program is run from in the terminal
+   *                     emulator.
+   * @param word         The updated word that the user typed.
+   * @throws IOException When there is an error with the terminal emulator.
+   */
   public static void updateWord(final Terminal terminal, final TextGraphics textGraphics,
-      final TerminalPosition initial, final String word) throws IOException {
+                                final TerminalPosition initial, final String word) throws IOException {
     textGraphics.setForegroundColor(ANSI.BLUE);
     textGraphics.putString(initial.withRelativeColumn(2), word);
     textGraphics.setForegroundColor(ANSI.DEFAULT);
     terminal.flush();
   }
 
+  /**
+   * Updates the list of all items. When the input word is updated, the
+   * the list is updated to match the query.
+   *
+   * @param terminal     The {@link Terminal} object being used.
+   * @param textGraphics An instance of a {@link TextGraphics} object.
+   * @param initial      The initial position this program is run from in the terminal
+   *                     emulator.
+   * @param word         The updated word that the user typed.
+   * @param input        The list of all items currently showed.
+   * @return The new, updated list of all items currently showed.
+   * @throws IOException When there is an error with the terminal emulator.
+   */
   public static String[] updateList(final Terminal terminal, final TextGraphics textGraphics,
-      final TerminalPosition initial, final String word, final String[] input) throws IOException {
+                                    final TerminalPosition initial, final String word, final String[] input) throws IOException {
 
     final String[] newInput = Arrays.stream(input).filter((string) -> string.length() >= word.length())
             .sorted(Comparator.comparingInt(string -> levenshtein(word, string))).toArray(String[]::new);
@@ -135,7 +170,7 @@ public class Main {
     final int columns = terminal.getTerminalSize().getColumns();
 
     for (int i = initialRow + 1; i < terminal.getTerminalSize().getRows()
-        && i - (initialRow + 1) < newInput.length; i++) {
+            && i - (initialRow + 1) < newInput.length; i++) {
       final String curr = String.format("%-" + columns + "s", newInput[i - (initialRow + 1)]);
       textGraphics.putString(2, i, curr);
     }
@@ -145,6 +180,14 @@ public class Main {
     return newInput;
   }
 
+  /**
+   * Calculates the <a href="https://en.wikipedia.org/wiki/Levenshtein_distance">levenshtein distance</a>
+   * between two strings.
+   *
+   * @param word1String The first word.
+   * @param word2String The second word.
+   * @return The levenshtein distance between both words.
+   */
   public static int levenshtein(final String word1String, final String word2String) {
     final char[] word1 = word1String.toCharArray();
     final char[] word2 = word2String.toCharArray();
@@ -183,7 +226,7 @@ public class Main {
    * <p>
    * Scan 1:
    * <p>
-   * 
+   *
    * <pre>
    *     {@code
    * affffffbffabjkc
@@ -193,7 +236,7 @@ public class Main {
    * <p>
    * Scan 2:
    * <p>
-   * 
+   *
    * <pre>
    *     {@code
    * affffffbffabjkc
@@ -209,7 +252,7 @@ public class Main {
   public static String findSubstring(final String inputString, final String dictionaryWord) {
     final String forwards = forwards(dictionaryWord, inputString, 0, 0);
     final String backwards = backwards(dictionaryWord, inputString, dictionaryWord.length() - 1,
-        inputString.length() - 1);
+            inputString.length() - 1);
 
     if (forwards.length() > backwards.length()) {
       return forwards;
@@ -218,12 +261,12 @@ public class Main {
     }
   }
 
-  @SuppressWarnings({ "SameParameterValue", "SameReturnValue", "unused" })
+  @SuppressWarnings({"SameParameterValue", "SameReturnValue", "unused"})
   public static String forwards(final String inputString, final String dictionaryWord, final int i, final int j) {
     return null;
   }
 
-  @SuppressWarnings({ "SameParameterValue", "SameReturnValue", "unused" })
+  @SuppressWarnings({"SameParameterValue", "SameReturnValue", "unused"})
   public static String backwards(final String inputString, final String dictionaryWord, final int i, final int j) {
     return null;
   }
