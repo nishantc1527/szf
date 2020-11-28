@@ -19,7 +19,8 @@ import java.util.Comparator;
  */
 public class Szf {
 
-  public static final boolean INSERT = false, COMMAND = true;
+  public static final boolean INSERT = false,
+                              COMMAND = true;
 
   /**
    * Official entry point.
