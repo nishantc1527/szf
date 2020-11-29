@@ -2,6 +2,7 @@ package szf;
 
 import com.googlecode.lanterna.SGR;
 import com.googlecode.lanterna.TerminalPosition;
+import com.googlecode.lanterna.TerminalSize;
 import com.googlecode.lanterna.TextCharacter;
 import com.googlecode.lanterna.TextColor.ANSI;
 import com.googlecode.lanterna.graphics.TextGraphics;
@@ -20,7 +21,7 @@ import java.util.Comparator;
 public class Szf {
 
   public static final boolean INSERT = false,
-                              COMMAND = true;
+          COMMAND = true;
 
   /**
    * Official entry point.
@@ -38,13 +39,14 @@ public class Szf {
 
     final TerminalPosition initial = terminal.getCursorPosition();
     final TextGraphics textGraphics = terminal.newTextGraphics();
+    final TerminalSize terminalSize = terminal.getTerminalSize();
 
     textGraphics.setCharacter(initial, new TextCharacter('>', ANSI.GREEN, ANSI.DEFAULT, SGR.BOLD));
     textGraphics.setCharacter(initial.withRelativeRow(1), new TextCharacter('>', ANSI.RED, ANSI.DEFAULT, SGR.BOLD));
     terminal.flush();
 
     updateWord(terminal, textGraphics, initial, "");
-    updateList(terminal, textGraphics, initial, "", input);
+    updateList(terminal, textGraphics, initial, terminalSize, "", input);
 
     terminal.setCursorPosition(initial.withRelativeColumn(2));
     terminal.flush();
@@ -65,13 +67,15 @@ public class Szf {
 
         mode = COMMAND;
       } else if (keyType == KeyType.Enter) {
+        textGraphics.setForegroundColor(ANSI.DEFAULT);
+        textGraphics.fillRectangle(initial, terminalSize, ' ');
+        terminal.setCursorPosition(initial);
+
         if (newInput.length != 0) {
-          textGraphics.setForegroundColor(ANSI.DEFAULT);
-          textGraphics.fillRectangle(initial, terminal.getTerminalSize(), ' ');
-          terminal.setCursorPosition(initial);
           System.out.println(newInput[0]);
         }
 
+        terminal.flush();
         terminal.close();
         return;
       } else if (keyType == KeyType.Backspace) {
@@ -81,7 +85,7 @@ public class Szf {
             textGraphics.setCharacter(initial.withRelativeColumn(word.length() + 1), ' ');
             word.deleteCharAt(tempPosition.getColumn() - 3);
             updateWord(terminal, textGraphics, initial, word.toString());
-            newInput = updateList(terminal, textGraphics, initial, word.toString(), input);
+            newInput = updateList(terminal, textGraphics, initial, terminalSize, word.toString(), input);
             terminal.setCursorPosition(tempPosition.withRelativeColumn(-1));
             terminal.flush();
           }
@@ -92,6 +96,10 @@ public class Szf {
         if (mode == COMMAND) {
           switch (character) {
             case 'q' -> {
+              textGraphics.setForegroundColor(ANSI.DEFAULT);
+              textGraphics.fillRectangle(initial, terminalSize, ' ');
+              terminal.setCursorPosition(initial);
+              terminal.flush();
               terminal.close();
               return;
             }
@@ -120,7 +128,7 @@ public class Szf {
           final TerminalPosition tempPosition = terminal.getCursorPosition();
           word.insert(tempPosition.getColumn() - 2, character);
           updateWord(terminal, textGraphics, initial, word.toString());
-          newInput = updateList(terminal, textGraphics, initial, word.toString(), input);
+          newInput = updateList(terminal, textGraphics, initial, terminalSize, word.toString(), input);
           terminal.setCursorPosition(tempPosition.withRelativeColumn(1));
           terminal.flush();
         }
@@ -161,19 +169,19 @@ public class Szf {
    * @throws IOException When there is an error with the terminal emulator.
    */
   public static String[] updateList(final Terminal terminal, final TextGraphics textGraphics,
-                                    final TerminalPosition initial, final String word, final String[] input) throws IOException {
-
+                                    final TerminalPosition initial, final TerminalSize terminalSize, final String word, final String[] input) throws IOException {
     final String[] newInput = Arrays.stream(input).filter((string) -> string.length() >= word.length())
             .sorted(Comparator.comparingInt(string -> levenshtein(word, string))).toArray(String[]::new);
     textGraphics.setForegroundColor(ANSI.RED);
 
     final int initialRow = initial.getRow();
-    final int columns = terminal.getTerminalSize().getColumns();
+    final int columns = terminalSize.getColumns();
 
-    for (int i = initialRow + 1; i < terminal.getTerminalSize().getRows()
-            && i - (initialRow + 1) < newInput.length; i++) {
-      final String curr = String.format("%-" + columns + "s", newInput[i - (initialRow + 1)]);
-      textGraphics.putString(2, i, curr);
+    for (int i = initialRow + 1; i < terminalSize.getRows()
+            && i - (initialRow + 1) < newInput.length
+            && i < (initialRow + 1) + 5; i++) {
+
+      textGraphics.putString(2, i, String.format("%-" + columns + "s", newInput[i - (initialRow + 1)]));
     }
 
     terminal.setForegroundColor(ANSI.DEFAULT);
