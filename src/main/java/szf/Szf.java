@@ -43,7 +43,9 @@ public class Szf {
     final TextGraphics textGraphics = terminal.newTextGraphics();
     final TerminalSize terminalSize = terminal.getTerminalSize();
 
-    if(initial.getRow() + Math.min(input.length + 1, 6) >= terminalSize.getRows()) {
+    final int rows = terminalSize.getRows() - initial.getRow() - 1;
+
+    if(initial.getRow() + 1 >= terminalSize.getRows()) {
       System.out.println("Not Enough Rows To Run");
       return;
     }
@@ -53,7 +55,7 @@ public class Szf {
     terminal.flush();
 
     updateWord(terminal, textGraphics, initial, "");
-    updateList(terminal, textGraphics, initial, terminalSize, "", input);
+    updateList(terminal, textGraphics, initial, terminalSize, "", input, rows);
 
     terminal.setCursorPosition(initial.withRelativeColumn(2));
     terminal.flush();
@@ -92,7 +94,7 @@ public class Szf {
             textGraphics.setCharacter(initial.withRelativeColumn(word.length() + 1), ' ');
             word.deleteCharAt(tempPosition.getColumn() - 3);
             updateWord(terminal, textGraphics, initial, word.toString());
-            newInput = updateList(terminal, textGraphics, initial, terminalSize, word.toString(), input);
+            newInput = updateList(terminal, textGraphics, initial, terminalSize, word.toString(), input, rows);
             terminal.setCursorPosition(tempPosition.withRelativeColumn(-1));
             terminal.flush();
           }
@@ -135,7 +137,7 @@ public class Szf {
           final TerminalPosition tempPosition = terminal.getCursorPosition();
           word.insert(tempPosition.getColumn() - 2, character);
           updateWord(terminal, textGraphics, initial, word.toString());
-          newInput = updateList(terminal, textGraphics, initial, terminalSize, word.toString(), input);
+          newInput = updateList(terminal, textGraphics, initial, terminalSize, word.toString(), input, rows);
           terminal.setCursorPosition(tempPosition.withRelativeColumn(1));
           terminal.flush();
         }
@@ -176,7 +178,8 @@ public class Szf {
    * @throws IOException When there is an error with the terminal emulator.
    */
   public static String[] updateList(final Terminal terminal, final TextGraphics textGraphics,
-                                    final TerminalPosition initial, final TerminalSize terminalSize, final String word, final String[] input) throws IOException {
+                                    final TerminalPosition initial, final TerminalSize terminalSize,
+                                    final String word, final String[] input, final int rows) throws IOException {
     final String[] newInput = Arrays.stream(input).filter((string) -> string.length() >= word.length())
             .sorted(Comparator.comparingInt(string -> levenshtein(word, string))).toArray(String[]::new);
     textGraphics.setForegroundColor(ANSI.RED);
@@ -186,7 +189,7 @@ public class Szf {
 
     for (int i = initialRow + 1; i < terminalSize.getRows()
             && i - (initialRow + 1) < newInput.length
-            && i < (initialRow + 1) + 5; i++) {
+            && i < (initialRow + 1) + rows; i++) {
 
       textGraphics.putString(2, i, String.format("%-" + columns + "s", newInput[i - (initialRow + 1)]));
     }
