@@ -189,7 +189,7 @@ public class Szf {
 
     for (int i = initialRow + 1; i < terminalSize.getRows()
             && i - (initialRow + 1) < newInput.length
-            && i < (initialRow + 1) + rows; i++) {
+            && i < (initialRow + 1) + rows - 1; i++) {
 
       textGraphics.putString(2, i, String.format("%-" + columns + "s", newInput[i - (initialRow + 1)]));
     }
