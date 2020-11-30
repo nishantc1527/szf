@@ -32,7 +32,9 @@ public class Szf {
    * @throws IOException When there is an error with the terminal emulator
    */
   public static void main(final String[] args) throws IOException {
-    final String[] input = String.join(" ", args).split(" ");
+    final String[] input = Arrays.stream(args)
+            .map((string) -> string.replaceAll("\u001B\\[[;\\d]*m", ""))
+            .toArray(String[]::new);
 
     final DefaultTerminalFactory defaultTerminalFactory = new DefaultTerminalFactory();
     final Terminal terminal = defaultTerminalFactory.createTerminal();
@@ -40,6 +42,11 @@ public class Szf {
     final TerminalPosition initial = terminal.getCursorPosition();
     final TextGraphics textGraphics = terminal.newTextGraphics();
     final TerminalSize terminalSize = terminal.getTerminalSize();
+
+    if(initial.getRow() + Math.min(input.length + 1, 6) >= terminalSize.getRows()) {
+      System.out.println("Not Enough Rows To Run");
+      return;
+    }
 
     textGraphics.setCharacter(initial, new TextCharacter('>', ANSI.GREEN, ANSI.DEFAULT, SGR.BOLD));
     textGraphics.setCharacter(initial.withRelativeRow(1), new TextCharacter('>', ANSI.RED, ANSI.DEFAULT, SGR.BOLD));
