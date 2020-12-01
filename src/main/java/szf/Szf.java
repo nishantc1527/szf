@@ -20,8 +20,15 @@ import java.util.Comparator;
  */
 public class Szf {
 
-  public static final boolean INSERT = false,
-          COMMAND = true;
+  /**
+   * Constant to signify insert mode.
+   */
+  public static final boolean INSERT = false;
+
+  /**
+   * Constant to signify command mode.
+   */
+  public static final boolean COMMAND = true;
 
   /**
    * Official entry point.
@@ -45,7 +52,7 @@ public class Szf {
 
     final int rows = terminalSize.getRows() - initial.getRow() - 1;
 
-    if(initial.getRow() + 1 >= terminalSize.getRows()) {
+    if (initial.getRow() + 1 >= terminalSize.getRows()) {
       System.out.println("Not Enough Rows To Run");
       return;
     }
@@ -172,8 +179,10 @@ public class Szf {
    * @param textGraphics An instance of a {@link TextGraphics} object.
    * @param initial      The initial position this program is run from in the terminal
    *                     emulator.
+   * @param terminalSize The size of the terminal.
    * @param word         The updated word that the user typed.
    * @param input        The list of all items currently showed.
+   * @param rows         The amount of rows you can fill in with input words.
    * @return The new, updated list of all items currently showed.
    * @throws IOException When there is an error with the terminal emulator.
    */
@@ -244,7 +253,6 @@ public class Szf {
    * Given affffffbffabjkc as a dictionary word and abc as the input word
    * <p>
    * Scan 1:
-   * <p>
    *
    * <pre>
    *     {@code
@@ -254,7 +262,6 @@ public class Szf {
    * </pre>
    * <p>
    * Scan 2:
-   * <p>
    *
    * <pre>
    *     {@code
@@ -265,29 +272,17 @@ public class Szf {
    * <p>
    * Each scan moves to the next position and starts scanning. Scan 2 is more
    * successful (smaller string), so output is "abjkc".
+   *
+   * @param inputString    The string entered by the user.
+   * @param dictionaryWord The word in the dictionary that this method is trying
+   *                       to find the substring of.
+   * @return The smallest substring of dictionaryWord that contains the most letters from
+   * inputString.
    */
 
-  @SuppressWarnings("all")
+  @SuppressWarnings({"SameReturnValue", "unused"})
   public static String findSubstring(final String inputString, final String dictionaryWord) {
-    final String forwards = forwards(dictionaryWord, inputString, 0, 0);
-    final String backwards = backwards(dictionaryWord, inputString, dictionaryWord.length() - 1,
-            inputString.length() - 1);
-
-    if (forwards.length() > backwards.length()) {
-      return forwards;
-    } else {
-      return backwards;
-    }
-  }
-
-  @SuppressWarnings({"SameParameterValue", "SameReturnValue", "unused"})
-  public static String forwards(final String inputString, final String dictionaryWord, final int i, final int j) {
-    return null;
-  }
-
-  @SuppressWarnings({"SameParameterValue", "SameReturnValue", "unused"})
-  public static String backwards(final String inputString, final String dictionaryWord, final int i, final int j) {
-    return null;
+    return "";
   }
 
 }
