@@ -270,6 +270,7 @@ public class Szf {
    *     }
    * </pre>
    * <p>
+   *
    * Each scan moves to the next position and starts scanning. Scan 2 is more
    * successful (smaller string), so output is "abjkc".
    *
