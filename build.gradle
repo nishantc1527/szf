@@ -18,7 +18,7 @@ shadowJar {
 }
 
 dependencies {
-  implementation 'com.googlecode.lanterna:lanterna:3.0.3'
+  implementation 'com.googlecode.lanterna:lanterna:3.1.1'
   testImplementation 'junit:junit:4.13'
 }
 
